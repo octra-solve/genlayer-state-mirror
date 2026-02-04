@@ -4,40 +4,75 @@ import { useState } from "react";
 import { getStorage, updateStorage } from "../lib/api";
 
 export default function StoragePanel() {
-  const [storage, setStorage] = useState<string | number>("—");
+  const [storage, setStorage] = useState<string>("—");
   const [value, setValue] = useState("");
-  const [txHash, setTxHash] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressUpdate, setAddressUpdate] = useState("");
 
-  const handleGet = async () => {
-    setLoading(true);
-    setError("");
+  // Separate states per action
+  const [loadingGetDefault, setLoadingGetDefault] = useState(false);
+  const [loadingGetByAddress, setLoadingGetByAddress] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+
+  const [errorGetDefault, setErrorGetDefault] = useState("");
+  const [errorGetByAddress, setErrorGetByAddress] = useState("");
+  const [errorUpdate, setErrorUpdate] = useState("");
+
+  const [txHash, setTxHash] = useState("");
+
+  // ------------------------
+  // Default storage query
+  // ------------------------
+  const handleGetDefault = async () => {
+    setLoadingGetDefault(true);
+    setErrorGetDefault("");
     setTxHash("");
     try {
       const res = await getStorage();
-      setStorage(res.value); 
+      setStorage(res.storage);
     } catch (err: any) {
-      setError("⚠️ " + err.message);
+      setErrorGetDefault("⚠️ " + err.message);
     } finally {
-      setLoading(false);
+      setLoadingGetDefault(false);
     }
   };
 
-  const handleUpdate = async () => {
-    if (!value) return setError("⚠️ Enter a value to store!");
-    setLoading(true);
-    setError("");
+  // ------------------------
+  // Query storage by contract address
+  // ------------------------
+  const handleGetByAddress = async () => {
+    if (!addressQuery) return setErrorGetByAddress("⚠️ Enter contract address to query!");
+    setLoadingGetByAddress(true);
+    setErrorGetByAddress("");
     setTxHash("");
     try {
-      const res = await updateStorage(Number(value));
+      const res = await getStorage(addressQuery);
+      setStorage(res.storage);
+    } catch (err: any) {
+      setErrorGetByAddress("⚠️ " + err.message);
+    } finally {
+      setLoadingGetByAddress(false);
+    }
+  };
+
+  // ------------------------
+  // Update storage (default or custom)
+  // ------------------------
+  const handleUpdate = async () => {
+    if (!value) return setErrorUpdate("⚠️ Enter a value to store!");
+    setLoadingUpdate(true);
+    setErrorUpdate("");
+    setTxHash("");
+    try {
+      const res = await updateStorage(value, addressUpdate || undefined);
       setTxHash(res.tx_hash);
       setStorage(value);
       setValue("");
+      setAddressUpdate("");
     } catch (err: any) {
-      setError("💥 " + err.message);
+      setErrorUpdate("💥 " + err.message);
     } finally {
-      setLoading(false);
+      setLoadingUpdate(false);
     }
   };
 
@@ -46,28 +81,63 @@ export default function StoragePanel() {
       <h1>🌱 GenLayer Storage UI</h1>
       <p className="subtext">Push values on-chain without touching CLI. Pure vibes.</p>
 
-      <button className="action-btn" onClick={handleGet} disabled={loading}>
-        {loading ? "⏳ Loading..." : "Get Current Storage"}
+      {/* Default storage query */}
+      <button
+        className="action-btn"
+        onClick={handleGetDefault}
+        disabled={loadingGetDefault}
+      >
+        {loadingGetDefault ? "⏳ Loading..." : "Get Current Storage"}
       </button>
+      {errorGetDefault && <p className="error">{errorGetDefault}</p>}
+
+      {/* Query by custom contract address */}
+      <input
+        type="text"
+        placeholder="Contract address to query"
+        value={addressQuery}
+        onChange={(e) => setAddressQuery(e.target.value)}
+        disabled={loadingGetByAddress}
+      />
+      <button
+        className="action-btn"
+        onClick={handleGetByAddress}
+        disabled={loadingGetByAddress}
+      >
+        {loadingGetByAddress ? "⏳ Querying..." : "Query Storage by Address"}
+      </button>
+      {errorGetByAddress && <p className="error">{errorGetByAddress}</p>}
+
+      {/* Update storage (default or custom) */}
+      <input
+        type="text"
+        placeholder="New storage value"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={loadingUpdate}
+      />
+      <input
+        type="text"
+        placeholder="Contract address to update (optional)"
+        value={addressUpdate}
+        onChange={(e) => setAddressUpdate(e.target.value)}
+        disabled={loadingUpdate}
+      />
+      <button
+        className="action-btn"
+        onClick={handleUpdate}
+        disabled={loadingUpdate}
+      >
+        {loadingUpdate ? "⏳ Sending..." : "Update Storage"}
+      </button>
+      {errorUpdate && <p className="error">{errorUpdate}</p>}
+
+      {/* Feedback */}
+      {txHash && <p className="success">✅ Tx Hash: {txHash}</p>}
 
       <p className="status">
         Current Value: <strong>{storage}</strong>
       </p>
-
-      <input
-        type="number"
-        placeholder="New storage value"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        disabled={loading}
-      />
-
-      <button className="action-btn" onClick={handleUpdate} disabled={loading}>
-        {loading ? "⏳ Sending..." : "Update Storage"}
-      </button>
-
-      {txHash && <p className="success">✅ Tx Hash: {txHash}</p>}
-      {error && <p className="error">{error}</p>}
     </div>
   );
 }

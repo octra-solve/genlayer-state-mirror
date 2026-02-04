@@ -1,23 +1,29 @@
 /**
- * GenLayer Storage API (Internal Next.js)
- * Handles storage fetch/update without requiring external uvicorn server.
- * Premium, auto-handled internal calls.
+ * GenLayer Storage API Client
+ * Connects frontend to GenLayer StudioNet backend (Python FastAPI)
  */
 
-type StorageResponse = { value: number };
-type UpdateResponse = { tx_hash: string };
+type StorageResponse = {
+  status: string;
+  storage: string;
+};
+
+type UpdateResponse = {
+  status: string;
+  tx_hash: string;
+  receipt_status?: string;
+  receipt?: any;
+};
 
 /**
- * Fetch current storage value
- * @param contractAddress optional contract address
+ * Fetch current storage value from backend
+ * @param contractAddress Optional address to query
  */
 export async function getStorage(contractAddress?: string): Promise<StorageResponse> {
-  const body = contractAddress ? { contract_address: contractAddress } : {};
-  
-  const res = await fetch("/api/storage", {
-    method: "POST",
+  const url = contractAddress ? `/storage?contract_address=${contractAddress}` : "/storage";
+  const res = await fetch(url, {
+    method: "GET",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -29,15 +35,15 @@ export async function getStorage(contractAddress?: string): Promise<StorageRespo
 }
 
 /**
- * Update storage value
- * @param value the new value to store
- * @param contractAddress optional contract address
+ * Update storage value on backend
+ * @param value The new storage value as string
+ * @param contractAddress Optional address to update
  */
-export async function updateStorage(value: number, contractAddress?: string): Promise<UpdateResponse> {
+export async function updateStorage(value: string, contractAddress?: string): Promise<UpdateResponse> {
   const body: any = { value };
   if (contractAddress) body.contract_address = contractAddress;
 
-  const res = await fetch("/api/storage/update", {
+  const res = await fetch("/storage", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
