@@ -3,3 +3,25 @@ account.json
 venv_mvp
 venv_mvp/
 venv_mvp/lib
+.next/
+/.next/dev
+/.next/dev/cache
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+*.log
+.env
+.DS_Store
+
+# Python / backend
+__pycache__/
+*.pyc
+venv_mvp/
+account.json
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
