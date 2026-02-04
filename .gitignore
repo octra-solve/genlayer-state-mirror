@@ -1,2 +1,5 @@
 node_modules
 account.json
+venv_mvp
+venv_mvp/
+venv_mvp/lib
