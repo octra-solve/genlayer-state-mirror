@@ -24,4 +24,4 @@ account.json
 # Editor / OS
 .vscode/
 .idea/
-*.swp
+*.swp.next/
