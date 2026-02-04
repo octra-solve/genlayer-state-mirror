@@ -65,7 +65,7 @@ export default function StoragePanel() {
     setTxHash("");
     try {
       const res = await updateStorage(value, addressUpdate || undefined);
-      setTxHash(res.tx_hash);
+      setTxHash(res.tx_hash ?? "");
       setStorage(value);
       setValue("");
       setAddressUpdate("");

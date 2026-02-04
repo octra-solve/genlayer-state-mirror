@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { execFile } from "child_process";
+import path from "path";
 
 type StorageResponse = {
   status: string;
@@ -16,38 +17,52 @@ export default function handler(
 ) {
   const contractAddress = req.body?.contract_address || req.query?.contract_address;
 
+  // Absolute path to api.py in project root
+  // Assumes frontend/ is inside project root
+  const apiPath = path.join(process.cwd(), "..", "api.py");
+
   if (req.method === "GET") {
-    // Call Python script to read storage
-    execFile("python3", ["./api.py", "get_storage", contractAddress || ""], (error, stdout, stderr) => {
+    execFile("python3", [apiPath, "get_storage", contractAddress || ""], (error, stdout, stderr) => {
       if (error) {
-        return res.status(500).json({ status: "error", error: stderr || error.message });
+        return res.status(500).json({
+          status: "error",
+          error: `Python execution failed: ${stderr || error.message}`
+        });
       }
       try {
         const data = JSON.parse(stdout);
+        if (!data.storage && data.error) {
+          return res.status(500).json({ status: "error", error: data.error });
+        }
         res.status(200).json({ status: "ok", storage: data.storage });
       } catch (e) {
-        res.status(500).json({ status: "error", error: "Failed to parse Python output" });
+        res.status(500).json({ status: "error", error: "Failed to parse Python output: " + e });
       }
     });
   } else if (req.method === "POST") {
     const value = req.body?.value;
     if (!value) return res.status(400).json({ status: "error", error: "Missing value" });
 
-    // Call Python script to update storage
-    execFile("python3", ["./api.py", "update_storage", value, contractAddress || ""], (error, stdout, stderr) => {
+    execFile("python3", [apiPath, "update_storage", value, contractAddress || ""], (error, stdout, stderr) => {
       if (error) {
-        return res.status(500).json({ status: "error", error: stderr || error.message });
+        return res.status(500).json({
+          status: "error",
+          error: `Python execution failed: ${stderr || error.message}`
+        });
       }
       try {
         const data = JSON.parse(stdout);
-        res.status(200).json({ 
-          status: "ok", 
-          tx_hash: data.tx_hash, 
-          receipt_status: data.receipt_status, 
-          receipt: data.receipt 
+        if (data.error) {
+          return res.status(500).json({ status: "error", error: data.error });
+        }
+        res.status(200).json({
+          status: "ok",
+          tx_hash: data.tx_hash || "",
+          receipt_status: data.receipt_status || "",
+          receipt: data.receipt || null
         });
       } catch (e) {
-        res.status(500).json({ status: "error", error: "Failed to parse Python output" });
+        res.status(500).json({ status: "error", error: "Failed to parse Python output: " + e });
       }
     });
   } else {

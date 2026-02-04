@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import json
 import sys
+import os
 from genlayer_py import create_client, create_account
 from genlayer_py.chains import studionet
 from genlayer_py.types import TransactionStatus
@@ -15,8 +16,17 @@ CONTRACT_ADDRESS = "0x028c4cFf2BAf365C963D8F8c218A2884bB4100C5"
 class StorageUpdate(BaseModel):
     value: str
 
-# Load the private key from account.json
-with open("account.json", "r") as f:
+# -----------------------------
+# Load private key safely from absolute path
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ACCOUNT_PATH = os.path.join(BASE_DIR, "account.json")  # adjust if account.json is elsewhere
+
+if not os.path.exists(ACCOUNT_PATH):
+    print(json.dumps({"error": f"account.json not found at {ACCOUNT_PATH}"}))
+    sys.exit(1)
+
+with open(ACCOUNT_PATH, "r") as f:
     data = json.load(f)
 
 # Create account object — *official usage*
