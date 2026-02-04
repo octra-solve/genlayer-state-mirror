@@ -1,70 +1,72 @@
 "use client";
 
 import { useState } from "react";
-import { getStorage, updateStorage } from "@/lib/api";
+import { getStorage, updateStorage } from "../lib/api";
 
 export default function StoragePanel() {
-  const [storage, setStorage] = useState<string>("—");
+  const [storage, setStorage] = useState<string | number>("—");
   const [value, setValue] = useState("");
   const [txHash, setTxHash] = useState("");
-  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleGet = async () => {
+    setLoading(true);
+    setError("");
+    setTxHash("");
     try {
-      setError(""); setStatus("⏳ Fetching storage…");
       const res = await getStorage();
-      setStorage(res.value);
-      setStatus("📡 Storage fetched!");
-      setTimeout(() => setStatus(""), 3000);
+      setStorage(res.value); 
     } catch (err: any) {
-      setError(err.message); setStatus(""); 
+      setError("⚠️ " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdate = async () => {
+    if (!value) return setError("⚠️ Enter a value to store!");
+    setLoading(true);
+    setError("");
+    setTxHash("");
     try {
-      setError(""); setStatus("⏳ Sending tx…");
       const res = await updateStorage(Number(value));
       setTxHash(res.tx_hash);
-      setStatus("✅ Tx sent!");
-      setTimeout(() => setStatus(""), 4000);
+      setStorage(value);
+      setValue("");
     } catch (err: any) {
-      setError(err.message); setStatus(""); 
+      setError("💥 " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const copyTx = () => {
-    if (!txHash) return;
-    navigator.clipboard.writeText(txHash);
-    setStatus("📋 Tx hash copied!");
-    setTimeout(() => setStatus(""), 3000);
-  };
-
   return (
-    <div className="panel glassmorphic">
+    <div className="panel">
       <h1>🌱 GenLayer Storage UI</h1>
+      <p className="subtext">Push values on-chain without touching CLI. Pure vibes.</p>
 
-      <div className="buttons">
-        <button className="gradient-btn" onClick={handleGet}>Get Storage</button>
-        <p>Current Value: <strong>{storage}</strong></p>
-      </div>
+      <button className="action-btn" onClick={handleGet} disabled={loading}>
+        {loading ? "⏳ Loading..." : "Get Current Storage"}
+      </button>
+
+      <p className="status">
+        Current Value: <strong>{storage}</strong>
+      </p>
 
       <input
+        type="number"
         placeholder="New storage value"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="input-glow"
+        disabled={loading}
       />
 
-      <div className="buttons">
-        <button className="gradient-btn" onClick={handleUpdate}>Update Storage</button>
-        {txHash && (
-          <button className="copy-btn" onClick={copyTx}>Copy Tx Hash</button>
-        )}
-      </div>
+      <button className="action-btn" onClick={handleUpdate} disabled={loading}>
+        {loading ? "⏳ Sending..." : "Update Storage"}
+      </button>
 
-      {status && <p className="status">{status}</p>}
+      {txHash && <p className="success">✅ Tx Hash: {txHash}</p>}
       {error && <p className="error">{error}</p>}
     </div>
   );
