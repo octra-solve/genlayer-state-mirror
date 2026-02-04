@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import json
 from genlayer_py import create_client, create_account
 from genlayer_py.chains import studionet
+from genlayer_py.types import TransactionStatus
 
 app = FastAPI()
 
@@ -41,12 +42,28 @@ def get_storage():
 def update_storage(data: StorageUpdate):
     try:
         client = create_client(chain=studionet, account=acct)
+
+        # 1️⃣ Send transaction
         tx_hash = client.write_contract(
             address=CONTRACT_ADDRESS,
             function_name="update_storage",
             args=[data.value],
             value=0
         )
-        return {"status": "ok", "tx_hash": tx_hash}
+
+        # 2️⃣ Wait for transaction to be accepted/finalized
+        #    Use ACCEPTED or FINALIZED depending on how much confirmation info you want
+        receipt = client.wait_for_transaction_receipt(
+            transaction_hash=tx_hash,
+            status=TransactionStatus.ACCEPTED
+        )
+
+        # 3️⃣ Return receipt + block info
+        return {
+            "status": "ok",
+            "tx_hash": tx_hash,
+            "receipt_status": receipt.get("status") if isinstance(receipt, dict) else None,
+            "receipt": receipt
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update storage: {e}")
