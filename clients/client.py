@@ -6,9 +6,9 @@ import time
 import json
 
 # ----------------------
-# Config: replace with your deployed contract address
+# my deployed contract address
 # ----------------------
-CONTRACT_ADDRESS = "0xa647f2B8A5A753BA8D213fC022faB74e1d947967"
+CONTRACT_ADDRESS = "0x028c4cFf2BAf365C963D8F8c218A2884bB4100C5"
 
 # Create a client instance
 client = ContractClient(CONTRACT_ADDRESS, StateMirror)
