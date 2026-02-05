@@ -11,30 +11,22 @@ from genlayer_py.types import TransactionStatus
 
 app = FastAPI()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ACCOUNT_PATH = os.path.join(BASE_DIR, "account.json")
+
 CONTRACT_ADDRESS = "0x028c4cFf2BAf365C963D8F8c218A2884bB4100C5"
 
 class StorageUpdate(BaseModel):
     value: str
 
-# -----------------------------
-# Load private key safely from absolute path
-# -----------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ACCOUNT_PATH = os.path.join(BASE_DIR, "account.json")  # adjust if account.json is elsewhere
-
-if not os.path.exists(ACCOUNT_PATH):
-    print(json.dumps({"error": f"account.json not found at {ACCOUNT_PATH}"}))
+# ---- Load account safely ----
+try:
+    with open(ACCOUNT_PATH, "r") as f:
+        data = json.load(f)
+    acct = create_account(data["private_key"])
+except Exception as e:
+    print(json.dumps({"error": f"Account load failed: {e}"}))
     sys.exit(1)
-
-with open(ACCOUNT_PATH, "r") as f:
-    data = json.load(f)
-
-# Create account object — *official usage*
-acct = create_account(data["private_key"])
-
-@app.get("/")
-def root():
-    return {"status": "ok", "message": "GenLayer StudioNet API running"}
 
 @app.get("/storage")
 def get_storage():
@@ -47,62 +39,52 @@ def get_storage():
         )
         return {"status": "ok", "storage": value}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read storage: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/storage")
 def update_storage(data: StorageUpdate):
     try:
         client = create_client(chain=studionet, account=acct)
-
         tx_hash = client.write_contract(
             address=CONTRACT_ADDRESS,
             function_name="update_storage",
             args=[data.value],
             value=0
         )
-
         receipt = client.wait_for_transaction_receipt(
             transaction_hash=tx_hash,
             status=TransactionStatus.ACCEPTED
         )
-
         return {
             "status": "ok",
             "tx_hash": tx_hash,
-            "receipt_status": receipt.get("status") if isinstance(receipt, dict) else None,
+            "receipt_status": receipt.get("status"),
             "receipt": receipt
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update storage: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# -----------------------------
-# CLI mode for execFile support
-# -----------------------------
+# -------- CLI MODE (execFile) --------
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="GenLayer CLI for storage")
-    parser.add_argument("command", choices=["get_storage", "update_storage"])
-    parser.add_argument("value_or_address", nargs="?", default=None)
-    parser.add_argument("contract_address", nargs="?", default=CONTRACT_ADDRESS)
-    args = parser.parse_args()
-
-    client = create_client(chain=studionet, account=acct)
     try:
-        if args.command == "get_storage":
-            value = client.read_contract(
-                address=args.contract_address,
-                function_name="get_storage",
-                args=[]
-            )
-            print(json.dumps({"storage": value}))
-        elif args.command == "update_storage":
-            if not args.value_or_address:
+        command = sys.argv[1]
+        value = sys.argv[2] if len(sys.argv) > 2 else None
+        address = sys.argv[3] if len(sys.argv) > 3 else CONTRACT_ADDRESS
+
+        client = create_client(chain=studionet, account=acct)
+
+        if command == "get_storage":
+            v = client.read_contract(address=address, function_name="get_storage", args=[])
+            print(json.dumps({"storage": v}))
+
+        elif command == "update_storage":
+            if not value:
                 raise ValueError("Missing value for update_storage")
+
             tx_hash = client.write_contract(
-                address=args.contract_address,
+                address=address,
                 function_name="update_storage",
-                args=[args.value_or_address],
+                args=[value],
                 value=0
             )
             receipt = client.wait_for_transaction_receipt(
@@ -111,9 +93,12 @@ if __name__ == "__main__":
             )
             print(json.dumps({
                 "tx_hash": tx_hash,
-                "receipt_status": receipt.get("status") if isinstance(receipt, dict) else None,
+                "receipt_status": receipt.get("status"),
                 "receipt": receipt
             }))
+        else:
+            raise ValueError("Unknown command")
+
     except Exception as e:
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
