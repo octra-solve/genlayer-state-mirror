@@ -85,7 +85,7 @@ export default function StoragePanel() {
       <div className="panel">
         <h2>Update Storage</h2>
         <input type="text" placeholder="New storage value" value={updateValue} onChange={e => setUpdateValue(e.target.value)} />
-        <input type="text" placeholder="Contract address to update (optional)" value={updateContract} onChange={e => setUpdateContract(e.target.value)} />
+        <input type="text" placeholder="Contract address" value={updateContract} onChange={e => setUpdateContract(e.target.value)} />
         <button onClick={handleUpdateStorage} disabled={loadingUpdate} className="action-btn">
           {loadingUpdate ? "⏳ Sending..." : "Update Storage"}
         </button>
