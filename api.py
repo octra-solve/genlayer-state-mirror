@@ -68,23 +68,26 @@ async def update_storage(data: StorageUpdate):
 # ----------------- CLI MODE -----------------
 if __name__ == "__main__":
     try:
-        command = sys.argv[1]
-        value = sys.argv[2] if len(sys.argv) > 2 else None
-        address = sys.argv[3] if len(sys.argv) > 3 else None
+        if len(sys.argv) < 2:
+            raise ValueError("Missing command. Use 'get_storage' or 'update_storage'.")
 
-        if not address:
-            raise ValueError("Missing contract address")
+        command = sys.argv[1].lower()
 
-        client = create_client(chain=studionet, account=acct)
-
+        # Parse CLI args dynamically
         if command == "get_storage":
-            v = client.read_contract(address=address, function_name="get_storage", args=[])
-            print(json.dumps({"storage": v}))
+            if len(sys.argv) < 3:
+                raise ValueError("Missing contract address for get_storage")
+            address = sys.argv[2]
+            client = create_client(chain=studionet, account=acct)
+            value = client.read_contract(address=address, function_name="get_storage", args=[])
+            print(json.dumps({"storage": value}))
 
         elif command == "update_storage":
-            if not value:
-                raise ValueError("Missing value for update_storage")
-
+            if len(sys.argv) < 4:
+                raise ValueError("Usage: update_storage <value> <contract_address>")
+            value = sys.argv[2]
+            address = sys.argv[3]
+            client = create_client(chain=studionet, account=acct)
             tx_hash = client.write_contract(
                 address=address,
                 function_name="update_storage",
@@ -101,7 +104,7 @@ if __name__ == "__main__":
                 "receipt": receipt
             }))
         else:
-            raise ValueError("Unknown command")
+            raise ValueError(f"Unknown command '{command}'")
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))
