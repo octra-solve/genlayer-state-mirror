@@ -4,86 +4,126 @@
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  background: #000000; /* pure black background */
+  background: #000000;
   color: #e5e7eb;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: clamp(10px, 2vw, 20px);
 }
 
 /* ------------------------
-   Glassmorphic Card
+   Page Wrapper (flex container)
 ------------------------ */
-#root, .panel, .panel-wrapper {
-  width: clamp(320px, 90%, 480px);
-  padding: clamp(20px, 5%, 35px);
-  background: rgba(0, 128, 255, 0.2); /* vibrant blue glass */
-  border-radius: 20px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-  border: 1px solid rgba(0, 128, 255, 0.5); /* blue border */
+.page-background {
   display: flex;
-  flex-direction: column;
-  gap: clamp(12px, 2%, 18px);
-  color: #00ff80; /* bright green text for contrast */
-  position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: clamp(15px, 3vw, 25px);
 }
 
-#root:hover, .panel:hover, .panel-wrapper:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+/* ------------------------
+   Panel & Wrapper (card)
+------------------------ */
+.panel-wrapper {
+  width: clamp(300px, 85%, 480px);
+  padding: clamp(20px, 4vw, 40px);
+  background: rgba(0, 128, 255, 0.25);
+  border-radius: clamp(15px, 3vw, 20px);
+  backdrop-filter: blur(clamp(15px, 3vw, 20px));
+  box-shadow: 0 clamp(20px, 4vw, 50px) clamp(40px, 8vw, 50px) rgba(0,0,0,0.5);
+  border: 1px solid rgba(0, 128, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vw, 24px);
+  position: relative;
+  color: #00ff80;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: center; /* center children horizontally */
+  text-align: center;
+}
+
+.panel-wrapper::before {
+  content: "";
+  position: absolute;
+  top: -clamp(5px, 1vw, 10px);
+  left: -clamp(5px, 1vw, 10px);
+  width: calc(100% + clamp(10px, 2vw, 20px));
+  height: calc(100% + clamp(10px, 2vw, 20px));
+  border-radius: clamp(15px, 3vw, 20px);
+  background: rgba(0, 128, 255, 0.35);
+  z-index: -1;
+  filter: blur(clamp(15px, 3vw, 20px));
+  opacity: 0.6;
+}
+
+.panel-wrapper:hover {
+  transform: translateY(-clamp(4px, 1vw, 8px));
+  box-shadow: 0 clamp(25px, 4vw, 60px) clamp(30px, 6vw, 60px) rgba(0,0,0,0.6);
+}
+
+/* ------------------------
+   Inner Panels
+------------------------ */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2vw, 18px);
+  width: 100%;
+  max-width: clamp(280px, 80%, 320px);
+  align-items: center;
 }
 
 /* ------------------------
    Headings & Text
 ------------------------ */
 h1 {
-  text-align: center;
   font-size: clamp(1.4rem, 4vw, 1.8rem);
-  color: #00ff80; /* green to outshine blue */
-  margin-bottom: clamp(4px, 1%, 8px);
+  color: #00ff80;
+  margin-bottom: clamp(6px, 2vw, 12px);
 }
 
-p, .subtext {
-  text-align: center;
-  font-size: clamp(0.85rem, 2.5vw, 1rem);
-  color: #b0ffcc; /* softer green */
-  margin-bottom: clamp(8px, 2%, 12px);
+h2 {
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  color: #00ff80;
+  margin-bottom: clamp(4px, 1.5vw, 8px);
 }
 
-.status, .success, .error {
-  text-align: center;
-  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+p, .subtext, .status, .success, .error {
+  font-size: clamp(0.85rem, 2.2vw, 1rem);
   word-break: break-word;
 }
 
-.success { color: #32cd32; } /* lime green */
-.error { color: #ff4c4c; }   /* bright red */
+.status { color: #b0ffcc; }
+.success { color: #32cd32; }
+.error   { color: #ff4c4c; }
 
 /* ------------------------
    Inputs
 ------------------------ */
 input {
-  width: 100%;
-  padding: clamp(10px, 2.5vw, 14px);
-  border-radius: 12px;
+  width: clamp(200px, 80%, 280px);
+  padding: clamp(10px, 2vw, 14px);
+  border-radius: clamp(10px, 2vw, 12px);
   border: 1px solid rgba(255,255,255,0.2);
   background: rgba(255,255,255,0.05);
-  color: #00ff80; /* text green to outshine blue */
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: #00ff80;
+  font-size: clamp(0.9rem, 2vw, 1rem);
   outline: none;
   transition: 0.2s;
+  text-align: center;
 }
 
 input::placeholder {
-  color: rgba(0, 255, 128, 0.5); /* faint green placeholder */
+  color: rgba(0, 255, 128, 0.5);
 }
 
 input:focus {
   border-color: #00ff80;
-  box-shadow: 0 0 10px rgba(0,255,128,0.5);
+  box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(0,255,128,0.5);
   background: rgba(255,255,255,0.1);
 }
 
@@ -91,21 +131,21 @@ input:focus {
    Buttons
 ------------------------ */
 button.action-btn {
-  width: 100%;
-  padding: clamp(10px, 2.5vw, 14px);
-  border-radius: 14px;
+  width: clamp(200px, 80%, 280px);
+  padding: clamp(10px, 2vw, 14px);
+  border-radius: clamp(12px, 2vw, 14px);
   border: none;
   font-weight: bold;
   color: #020617;
-  background: #00ff80; /* vibrant green */
+  background: #00ff80;
   cursor: pointer;
   transition: 0.25s;
 }
 
 button.action-btn:hover {
   opacity: 0.95;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  transform: translateY(-clamp(2px, 1vw, 4px));
+  box-shadow: 0 clamp(6px, 1.5vw, 20px) clamp(10px, 2vw, 20px) rgba(0,0,0,0.3);
 }
 
 button.action-btn:disabled {
@@ -114,63 +154,26 @@ button.action-btn:disabled {
 }
 
 /* ------------------------
-   Logs & Status
------------------------- */
-.log, .status, .success, .error {
-  word-break: break-word;
-}
-
-/* ------------------------
-   Page & Wrapper
------------------------- */
-.page-background {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #000000;
-  font-family: 'Inter', system-ui, sans-serif;
-  padding: 20px;
-}
-
-.panel-wrapper {
-  width: 100%;
-  max-width: 480px;
-  padding: clamp(25px, 5vw, 40px);
-  background: rgba(0, 128, 255, 0.25);
-  border-radius: 20px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-  border: 1px solid rgba(0, 128, 255, 0.5);
-  position: relative;
-  color: #00ff80;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.panel-wrapper::before {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: -5px;
-  width: calc(100% + 10px);
-  height: calc(100% + 10px);
-  border-radius: 20px;
-  background: rgba(0, 128, 255, 0.35);
-  z-index: -1;
-  filter: blur(20px);
-  opacity: 0.6;
-}
-
-/* ------------------------
    Responsive Tweaks
 ------------------------ */
 @media(max-width: 400px) {
-  #root, .panel, .panel-wrapper {
+  .panel-wrapper {
     padding: clamp(15px, 4vw, 25px);
-    gap: 10px;
+    gap: clamp(10px, 3vw, 14px);
+  }
+  
+  .panel {
+    max-width: clamp(240px, 90%, 280px);
+    gap: clamp(8px, 2vw, 12px);
   }
 
-  h1 { font-size: 1.4rem; }
-  p, .subtext { font-size: 0.85rem; }
-  input, button.action-btn { font-size: 0.9rem; padding: 10px; }
+  input, button.action-btn {
+    width: clamp(180px, 90%, 260px);
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+    padding: clamp(8px, 1.5vw, 12px);
+  }
+
+  h1 { font-size: clamp(1.3rem, 4vw, 1.6rem); }
+  h2 { font-size: clamp(1rem, 3vw, 1.3rem); }
+  p, .subtext, .status, .success, .error { font-size: clamp(0.8rem, 2vw, 0.9rem); }
 }

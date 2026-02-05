@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import json
 import sys
@@ -14,10 +14,9 @@ app = FastAPI()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ACCOUNT_PATH = os.path.join(BASE_DIR, "account.json")
 
-CONTRACT_ADDRESS = "0x028c4cFf2BAf365C963D8F8c218A2884bB4100C5"
-
 class StorageUpdate(BaseModel):
     value: str
+    address: str
 
 # ---- Load account safely ----
 try:
@@ -28,12 +27,14 @@ except Exception as e:
     print(json.dumps({"error": f"Account load failed: {e}"}))
     sys.exit(1)
 
+# ----------------- API ENDPOINTS -----------------
+
 @app.get("/storage")
-def get_storage():
+async def get_storage(address: str):
     try:
         client = create_client(chain=studionet, account=acct)
         value = client.read_contract(
-            address=CONTRACT_ADDRESS,
+            address=address,
             function_name="get_storage",
             args=[]
         )
@@ -42,11 +43,11 @@ def get_storage():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/storage")
-def update_storage(data: StorageUpdate):
+async def update_storage(data: StorageUpdate):
     try:
         client = create_client(chain=studionet, account=acct)
         tx_hash = client.write_contract(
-            address=CONTRACT_ADDRESS,
+            address=data.address,
             function_name="update_storage",
             args=[data.value],
             value=0
@@ -64,12 +65,15 @@ def update_storage(data: StorageUpdate):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# -------- CLI MODE (execFile) --------
+# ----------------- CLI MODE -----------------
 if __name__ == "__main__":
     try:
         command = sys.argv[1]
         value = sys.argv[2] if len(sys.argv) > 2 else None
-        address = sys.argv[3] if len(sys.argv) > 3 else CONTRACT_ADDRESS
+        address = sys.argv[3] if len(sys.argv) > 3 else None
+
+        if not address:
+            raise ValueError("Missing contract address")
 
         client = create_client(chain=studionet, account=acct)
 
