@@ -18,7 +18,7 @@ class StorageUpdate(BaseModel):
     value: str
     address: str
 
-# ---- Load account safely (env fallback for Render) ----
+# ---- Load account safely ----
 try:
     ACCOUNT_JSON = os.environ.get("ACCOUNT_JSON")
     if ACCOUNT_JSON:
@@ -26,13 +26,18 @@ try:
     else:
         with open(ACCOUNT_PATH, "r") as f:
             data = json.load(f)
+
     acct = create_account(data["private_key"])
 except Exception as e:
     print(json.dumps({"error": f"Account load failed: {e}"}))
     sys.exit(1)
 
-# ----------------- API ENDPOINTS -----------------
+# ----------------- Root Route -----------------
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "API is live"}
 
+# ----------------- API ENDPOINTS -----------------
 @app.get("/storage")
 async def get_storage(address: str):
     try:
@@ -76,22 +81,20 @@ if __name__ == "__main__":
             raise ValueError("Missing command. Use 'get_storage' or 'update_storage'.")
 
         command = sys.argv[1].lower()
+        value = sys.argv[2] if len(sys.argv) > 2 else None
+        address = sys.argv[3] if len(sys.argv) > 3 else None
 
-        # Parse CLI args dynamically
+        client = create_client(chain=studionet, account=acct)
+
         if command == "get_storage":
-            if len(sys.argv) < 3:
+            if not address:
                 raise ValueError("Missing contract address for get_storage")
-            address = sys.argv[2]
-            client = create_client(chain=studionet, account=acct)
-            value = client.read_contract(address=address, function_name="get_storage", args=[])
-            print(json.dumps({"storage": value}))
+            v = client.read_contract(address=address, function_name="get_storage", args=[])
+            print(json.dumps({"storage": v}))
 
         elif command == "update_storage":
-            if len(sys.argv) < 4:
+            if not value or not address:
                 raise ValueError("Usage: update_storage <value> <contract_address>")
-            value = sys.argv[2]
-            address = sys.argv[3]
-            client = create_client(chain=studionet, account=acct)
             tx_hash = client.write_contract(
                 address=address,
                 function_name="update_storage",
