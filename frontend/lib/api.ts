@@ -3,6 +3,8 @@
  * Connects frontend to GenLayer StudioNet backend (Python script via Next.js API)
  */
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE; // <- added
+
 type StorageResponse = {
   status: string;
   storage: string;
@@ -22,7 +24,9 @@ type UpdateResponse = {
  * @param contractAddress Optional address to query
  */
 export async function getStorage(contractAddress?: string): Promise<StorageResponse> {
-  const url = contractAddress ? `/api/storage?contract_address=${contractAddress}` : "/api/storage";
+  const url = contractAddress
+    ? `${API_BASE}/storage?address=${contractAddress}`
+    : `${API_BASE}/storage`; 
   const res = await fetch(url, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
@@ -45,9 +49,9 @@ export async function getStorage(contractAddress?: string): Promise<StorageRespo
  */
 export async function updateStorage(value: string, contractAddress?: string): Promise<UpdateResponse> {
   const body: any = { value };
-  if (contractAddress) body.contract_address = contractAddress;
+  if (contractAddress) body.address = contractAddress; // <- updated to match backend
 
-  const res = await fetch("/api/storage", {
+  const res = await fetch(`${API_BASE}/storage`, { // <- updated
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
