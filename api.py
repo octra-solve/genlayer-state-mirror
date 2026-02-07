@@ -18,10 +18,14 @@ class StorageUpdate(BaseModel):
     value: str
     address: str
 
-# ---- Load account safely ----
+# ---- Load account safely (env fallback for Render) ----
 try:
-    with open(ACCOUNT_PATH, "r") as f:
-        data = json.load(f)
+    ACCOUNT_JSON = os.environ.get("ACCOUNT_JSON")
+    if ACCOUNT_JSON:
+        data = json.loads(ACCOUNT_JSON)
+    else:
+        with open(ACCOUNT_PATH, "r") as f:
+            data = json.load(f)
     acct = create_account(data["private_key"])
 except Exception as e:
     print(json.dumps({"error": f"Account load failed: {e}"}))
