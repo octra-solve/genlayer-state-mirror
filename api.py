@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 import sys
@@ -10,6 +11,15 @@ from genlayer_py.chains import studionet
 from genlayer_py.types import TransactionStatus
 
 app = FastAPI()
+
+# ----------------- CORS -----------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://genlayer-state-mirror-vv88.vercel.app"],  # my frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ACCOUNT_PATH = os.path.join(BASE_DIR, "account.json")
